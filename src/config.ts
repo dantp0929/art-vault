@@ -3,20 +3,22 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 interface DiscordConfig {
-  discordToken: string
+  token: string
+  clientId: string
+  guildId: string
 }
 
 interface DbConfig {
-  psqlHost: string
-  psqlPort: number
-  psqlUser: string
-  psqlPass: string
-  psqlDatabase: string
+  host: string
+  port: number
+  user: string
+  password: string
+  database: string
 }
 
-const { DISCORD_TOKEN, PSQL_HOST, PSQL_PORT, PSQL_USER, PSQL_PASS, PSQL_DATABASE } = process.env
+const { DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_ID, PSQL_HOST, PSQL_PORT, PSQL_USER, PSQL_PASS, PSQL_DATABASE } = process.env
 
-if (!DISCORD_TOKEN) {
+if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID || !DISCORD_GUILD_ID) {
   throw new Error('Missing Discord configuration variables.')
 }
 
@@ -25,13 +27,15 @@ if (!PSQL_HOST || !PSQL_PORT || !PSQL_USER || !PSQL_PASS || !PSQL_DATABASE) {
 }
 
 export const discordConfigs: DiscordConfig = {
-  discordToken: DISCORD_TOKEN
+  token: DISCORD_TOKEN,
+  clientId: DISCORD_CLIENT_ID,
+  guildId: DISCORD_GUILD_ID
 }
 
 export const dbConfigs: DbConfig = {
-  psqlHost: PSQL_HOST,
-  psqlPort: parseInt(PSQL_PORT, 10),
-  psqlUser: PSQL_USER,
-  psqlPass: PSQL_PASS,
-  psqlDatabase: PSQL_DATABASE
+  host: PSQL_HOST,
+  port: parseInt(PSQL_PORT, 10),
+  user: PSQL_USER,
+  password: PSQL_PASS,
+  database: PSQL_DATABASE
 }

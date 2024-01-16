@@ -1,14 +1,14 @@
 import { Client } from 'pg'
 import { dbConfigs } from '../config'
 
-const { psqlHost, psqlPort, psqlUser, psqlPass, psqlDatabase } = dbConfigs
+const { host, port, user, password, database } = dbConfigs
 
 export const dbClient = new Client({
-  host: psqlHost,
-  port: psqlPort,
-  database: psqlDatabase,
-  user: psqlUser,
-  password: psqlPass
+  host,
+  port,
+  database,
+  user,
+  password
 })
 
 dbClient.connect()
