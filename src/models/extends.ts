@@ -1,7 +1,7 @@
-import { ApplicationCommand, Client, Collection } from "discord.js";
+import { type BaseInteraction, type ApplicationCommand, type Client, type Collection } from 'discord.js'
 
 export interface ExtendedApplicationCommand extends ApplicationCommand {
-  execute: Function
+  execute: (interaction: BaseInteraction) => Promise<string>
 }
 
 export interface ExtendedClient extends Client {

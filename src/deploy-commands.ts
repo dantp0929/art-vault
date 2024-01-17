@@ -27,10 +27,10 @@ for (const folder of commandFolders) {
 }
 
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(token);
+const rest = new REST().setToken(token)
 
 // and deploy your commands!
-export const deployCommands = (async () => {
+export const deployCommands = async (): Promise<void> => {
   try {
     console.log(`Started refreshing ${commands.length} application (/) commands.`)
 
@@ -45,4 +45,4 @@ export const deployCommands = (async () => {
     // And of course, make sure you catch and log any errors!
     console.error(error)
   }
-})
+}
