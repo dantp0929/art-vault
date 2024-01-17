@@ -20,14 +20,13 @@ discordClient.on(Events.InteractionCreate, async (interaction: BaseInteraction) 
   }
 
   try {
-    const query = await command.execute(interaction)
-    await dbClient.query(query)
-  } catch (error) {
-    console.error(error)
+    await command.execute(interaction, dbClient)
+  } catch ({ name, message }) {
+    console.error(message)
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true })
+      await interaction.followUp({ content: message as string, ephemeral: true })
     } else {
-      await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true })
+      await interaction.reply({ content: message as string, ephemeral: true })
     }
   }
 })
