@@ -1,7 +1,7 @@
 import { type BaseInteraction, Events } from 'discord.js'
 import { deployCommands } from './deploy-commands'
 import { dbClient, discordClient } from './services'
-import { type ExtendedApplicationCommand, type ExtendedClient } from './models/extends'
+import { type ExtendedApplicationCommand, type ExtendedClient } from './models/Extensions'
 
 deployCommands()
 

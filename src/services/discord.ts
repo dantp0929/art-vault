@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { discordConfigs } from '../config'
 import { Client, Collection, GatewayIntentBits } from 'discord.js'
-import { type ExtendedClient } from '../models/extends'
+import { type ExtendedClient } from '../models/Extensions'
 
 const { token } = discordConfigs
 
