@@ -1,6 +1,7 @@
 import { type Client } from 'pg'
 import { SlashCommandBuilder } from 'discord.js'
-import { createSubmission, createTags, getSubmissionByLink, getTags } from '../../services/queries'
+import { createSubmission, createTags, getSubmissionByLink, getTags, updateSubmission } from '../../services/queries'
+import { SubmissionError } from '../../models/Errors'
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,25 +18,37 @@ module.exports = {
     try {
       const submitter: string = interaction.user.username
       const externalLink = getTransformedLink(new URL(interaction.options.getString('link'))) // eslint-disable-line @typescript-eslint/no-unsafe-argument
-      const tags = ((interaction.options.getString('tags') as string) ?? '').split(',').map(tag => tag.trim())
-      const createdOn = new Date().toISOString()
+      let tags = ((interaction.options.getString('tags') as string) ?? '').split(',').map(tag => tag.trim()).filter(tag => !!tag)
+      const currentTime = new Date().toISOString()
 
-      const existingSubmissions = await getSubmissionByLink(dbClient, externalLink)
-      if (existingSubmissions.rowCount! > 0) {
-        const existingSubmission = existingSubmissions.rows[0]
-        const existingTags = await getTags(dbClient, existingSubmission.id)
-        console.log(tags)
-        existingTags.rows.forEach(row => {
-          if (tags.includes(row.tag)) {
-            tags.splice(tags.indexOf(row.tag), 1)
+      const existingSubmission = (await getSubmissionByLink(dbClient, externalLink)).rows[0]
+
+      await dbClient.query('BEGIN')
+
+      if (existingSubmission) {
+        const parsedDiscordLink = existingSubmission.discordLink.split('/')
+        const existingMessageId = parsedDiscordLink.at(parsedDiscordLink.length - 1)
+        const existingMessage = await interaction.channel?.messages.fetch(existingMessageId).catch((e: any) => { console.log(e) })
+
+        const existingTags = (await getTags(dbClient, existingSubmission.id)).rows
+        const newTags = tags
+        existingTags.forEach(row => {
+          if (newTags.includes(row.tag)) {
+            newTags.splice(newTags.indexOf(row.tag), 1)
           }
         })
 
-        if (tags.length > 0) {
-          createTags(dbClient, existingSubmission.id, tags)
-          throw new Error(`This link has already been submitted: ${existingSubmission.discordLink} \nTags have been updated.`)
+        // The submission's latest post still exists
+        if (existingMessage !== undefined) {
+          if (newTags.length > 0) {
+            await createTags(dbClient, existingSubmission.id, newTags)
+            newTags.push(...existingTags.map(r => r.tag))
+            existingMessage.edit(`${externalLink} - ${newTags.join(', ')}`)
+            throw new SubmissionError(`This link has already been submitted: ${existingSubmission.discordLink} \nTags have been updated.`)
+          }
+          throw new Error(`This link has already been submitted: ${existingSubmission.discordLink}`)
         }
-        throw new Error(`This link has already been submitted: ${existingSubmission.discordLink}`)
+        tags = [...newTags, ...existingTags.map(r => r.tag)]
       }
 
       // Send a reply and retrieve the link
@@ -46,13 +59,22 @@ module.exports = {
       const discordLink = `https://discord.com/channels/${reply.guildId}/${reply.channelId}/${reply.id}`
 
       // Insert into submissions and submission_tags tables
-      await dbClient.query('BEGIN')
-      const submission = await createSubmission(dbClient, submitter, externalLink, discordLink, createdOn)
-      createTags(dbClient, submission.rows[0].id, tags)
+      if (existingSubmission) {
+        await updateSubmission(dbClient, existingSubmission.id, discordLink, currentTime)
+        const newTags = await getNewTags(dbClient, existingSubmission.id, tags)
+        await createTags(dbClient, existingSubmission.id, newTags)
+      } else {
+        const submission = await createSubmission(dbClient, submitter, externalLink, discordLink, currentTime)
+        await createTags(dbClient, submission.rows[0].id, tags)
+      }
+
       await dbClient.query('COMMIT')
     } catch (e) {
-      console.log(e)
-      await dbClient.query('ROLLBACK')
+      if (e instanceof SubmissionError) {
+        await dbClient.query('COMMIT')
+      } else {
+        await dbClient.query('ROLLBACK')
+      }
 
       throw e
     }
@@ -68,4 +90,14 @@ const getTransformedLink = (originalUrl: URL): string => {
     link = originalUrl.href.replace('x.com', 'vxtwitter.com')
   }
   return link.trim()
+}
+
+const getNewTags = async (dbClient: Client, submissionId: number, tags: string[]): Promise<string[]> => {
+  const existingTags = (await getTags(dbClient, submissionId)).rows
+  existingTags.forEach(row => {
+    if (tags.includes(row.tag)) {
+      tags.splice(tags.indexOf(row.tag), 1)
+    }
+  })
+  return tags
 }
