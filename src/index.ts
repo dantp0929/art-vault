@@ -1,9 +1,6 @@
 import { type BaseInteraction, Events } from 'discord.js'
-import { deployCommands } from './deploy-commands'
 import { dbClient, discordClient } from './services'
 import { type ExtendedApplicationCommand, type ExtendedClient } from './models/Extensions'
-
-deployCommands()
 
 discordClient.on('ready', () => {
   console.log(`Logged in as ${discordClient.user!.tag}!`)
@@ -21,12 +18,14 @@ discordClient.on(Events.InteractionCreate, async (interaction: BaseInteraction) 
 
   try {
     await command.execute(interaction, dbClient)
-  } catch ({ name, message }) {
-    console.error(message)
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: message as string, ephemeral: true })
-    } else {
-      await interaction.reply({ content: message as string, ephemeral: true })
+  } catch (e) {
+    if (e instanceof Error) {
+      console.error(e.message)
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: e.message, ephemeral: true })
+      } else {
+        await interaction.reply({ content: e.message, ephemeral: true })
+      }
     }
   }
 })

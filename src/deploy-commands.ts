@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { discordConfigs } from './config'
 
-const { token, clientId, guildId } = discordConfigs
+const { token, clientId, guildIds } = discordConfigs
 
 const commands: any[] = []
 // Grab all the command folders from the commands directory you created earlier
@@ -34,15 +34,21 @@ export const deployCommands = async (): Promise<void> => {
   try {
     console.log(`Started refreshing ${commands.length} application (/) commands.`)
 
-    // The put method is used to fully refresh all commands in the guild with the current set
-    const data: any = await rest.put(
-      Routes.applicationGuildCommands(clientId, guildId),
-      { body: commands }
-    )
+    const datas: Array<Promise<any>> = []
+    guildIds.split(',').forEach(guildId => {
+      // The put method is used to fully refresh all commands in the guild with the current set
+      datas.push(rest.put(
+        Routes.applicationGuildCommands(clientId, guildId),
+        { body: commands }
+      ))
+    })
+    await Promise.all(datas)
 
-    console.log(`Successfully reloaded ${data.length} application (/) commands.`)
+    console.log(`Finished refreshing ${commands.length} application (/) commands.`)
   } catch (error) {
     // And of course, make sure you catch and log any errors!
     console.error(error)
   }
 }
+
+deployCommands()

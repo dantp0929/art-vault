@@ -1,11 +1,12 @@
 import dotenv from 'dotenv'
 
-dotenv.config()
+// eslint-disable-next-line n/no-path-concat
+dotenv.config({ path: __dirname + '/.env' })
 
 interface DiscordConfig {
   token: string
   clientId: string
-  guildId: string
+  guildIds: string
 }
 
 interface DbConfig {
@@ -16,9 +17,9 @@ interface DbConfig {
   database: string
 }
 
-const { DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_ID, PSQL_HOST, PSQL_PORT, PSQL_USER, PSQL_PASS, PSQL_DATABASE } = process.env
+const { DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_IDS, PSQL_HOST, PSQL_PORT, PSQL_USER, PSQL_PASS, PSQL_DATABASE } = process.env
 
-if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID || !DISCORD_GUILD_ID) {
+if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID || !DISCORD_GUILD_IDS) {
   throw new Error('Missing Discord configuration variables.')
 }
 
@@ -29,7 +30,7 @@ if (!PSQL_HOST || !PSQL_PORT || !PSQL_USER || !PSQL_PASS || !PSQL_DATABASE) {
 export const discordConfigs: DiscordConfig = {
   token: DISCORD_TOKEN,
   clientId: DISCORD_CLIENT_ID,
-  guildId: DISCORD_GUILD_ID
+  guildIds: DISCORD_GUILD_IDS
 }
 
 export const dbConfigs: DbConfig = {
