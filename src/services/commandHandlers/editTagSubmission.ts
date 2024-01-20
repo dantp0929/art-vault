@@ -2,7 +2,7 @@ import { type ModalSubmitInteraction } from 'discord.js'
 import { type Client } from 'pg'
 import { createTags, deleteTags, getSubmissionById } from '../queries'
 
-export const editTagSubmission = async (interaction: ModalSubmitInteraction, dbClient: Client) => {
+export const editTagSubmission = async (interaction: ModalSubmitInteraction, dbClient: Client): Promise<string | undefined> => {
   try {
     if (!interaction.isModalSubmit()) return
 
