@@ -26,8 +26,7 @@ module.exports = {
       await dbClient.query('BEGIN')
 
       if (existingSubmission) {
-        const parsedDiscordLink = existingSubmission.discordLink.split('/')
-        const existingMessageId = parsedDiscordLink.at(parsedDiscordLink.length - 1)
+        const existingMessageId = existingSubmission.discordLink.split('/').at(6)
         const existingMessage = await interaction.channel?.messages.fetch(existingMessageId).catch((e: any) => { console.log(e) })
 
         const existingTags = (await getTags(dbClient, existingSubmission.id)).rows
