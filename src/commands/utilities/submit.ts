@@ -14,7 +14,7 @@ module.exports = {
     .addStringOption(option =>
       option.setName('tags')
         .setDescription('Comma separated tags for the art piece.')),
-  async execute (interaction: any, dbClient: Client) {
+  async execute(interaction: any, dbClient: Client) {
     try {
       const submitter: string = interaction.user.username
       const externalLink = getTransformedLink(new URL(interaction.options.getString('link'))) // eslint-disable-line @typescript-eslint/no-unsafe-argument
@@ -90,8 +90,8 @@ const getTransformedLink = (originalUrl: URL): string => {
   }
 
   if (link.includes('vxtwitter.com')) {
-    link = link.slice(0, link.indexOf('?'))
-    link = link.slice(0, link.indexOf('/photo'))
+    if (link.includes('?')) link = link.slice(0, link.indexOf('?'))
+    if (link.includes('/photo')) link = link.slice(0, link.indexOf('/photo'))
   }
 
   return link.trim()
