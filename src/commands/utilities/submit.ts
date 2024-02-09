@@ -45,7 +45,7 @@ module.exports = {
             existingMessage.edit(`${externalLink} - ${newTags.join(', ')}`)
             throw new SubmissionError(`This link has already been submitted: ${existingSubmission.discordLink} \nTags have been updated.`)
           }
-          throw new Error(`This link has already been submitted: ${existingSubmission.discordLink}`)
+          throw new Error(`This link has already been submitted: ${existingSubmission.discordLink}\nhttps://tenor.com/view/cringe-gif-24107071`)
         }
         tags = [...newTags, ...existingTags.map(r => r.tag)]
       }
@@ -88,6 +88,12 @@ const getTransformedLink = (originalUrl: URL): string => {
   if (originalUrl.host === 'x.com') {
     link = originalUrl.href.replace('x.com', 'vxtwitter.com')
   }
+
+  if (link.includes('vxtwitter.com')) {
+    link = link.slice(0, link.indexOf('?'))
+    link = link.slice(0, link.indexOf('/photo'))
+  }
+
   return link.trim()
 }
 
