@@ -2,7 +2,7 @@ import { type Client, type QueryResult } from 'pg'
 import { type SubmissionTag, type Submission } from '../models/DatabaseModels'
 
 export const getSubmissionByLink = async (dbClient: Client, externalLink: string): Promise<QueryResult<Submission>> => {
-  return await dbClient.query<Submission>('SELECT id, submitter, external_link as "externalLink", discord_link as "discordLink", created_on as "createdOn", updated_on as "updatedOn" FROM public.submissions WHERE external_link LIKE CONCAT($1::text, \'%\')',
+  return await dbClient.query<Submission>('SELECT id, submitter, external_link as "externalLink", discord_link as "discordLink", created_on as "createdOn", updated_on as "updatedOn" FROM public.submissions WHERE external_link = $1',
     [externalLink])
 }
 
