@@ -57,3 +57,13 @@ export const getTopTagSubmitters = async (dbClient: Client, tag: string, sinceDa
       [tag, sinceDate.toDateString()])
   }
 }
+
+export const getTopSubmitterTags = async (dbClient: Client, submitter: string, sinceDate: Date | null = null): Promise<QueryResult<TopSubmitters>> => {
+  if (sinceDate == null) {
+    return await dbClient.query('SELECT s.submitter, st.tag, COUNT(*) FROM public.submissions s LEFT JOIN public.submission_tags st ON s.id = st.submission_id WHERE s.submitter = $1 GROUP BY s.submitter, st.tag ORDER BY count DESC',
+      [submitter])
+  } else {
+    return await dbClient.query('SELECT s.submitter, st.tag, COUNT(*) FROM public.submissions s LEFT JOIN public.submission_tags st ON s.id = st.submission_id WHERE s.submitter = $1 AND s.created_on > $2 GROUP BY s.submitter, st.tag ORDER BY count DESC',
+      [submitter, sinceDate.toDateString()])
+  }
+}
