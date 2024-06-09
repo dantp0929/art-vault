@@ -10,7 +10,12 @@ module.exports = {
     .addStringOption(option =>
       option.setName('tag')
         .setDescription('Tag of submissions to search for.')
-        .setRequired(true)),
+        .setRequired(true))
+    .addBooleanOption(option =>
+      option.setName('public')
+        .setDescription('Show the results to everyone.')
+        .setRequired(false)
+    ),
   async execute (interaction: any, dbClient: Client) {
     const tag = (interaction.options.getString('tag') as string) ?? ''
 
@@ -27,7 +32,8 @@ module.exports = {
 
     await interaction.reply({
       content: '```\n' + table.toString() + '```',
-      fetchReply: true
+      fetchReply: true,
+      ephemeral: !interaction.options.getBoolean('public') ?? true
     })
   }
 }
