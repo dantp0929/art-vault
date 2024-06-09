@@ -67,3 +67,7 @@ export const getTopSubmitterTags = async (dbClient: Client, submitter: string, s
       [submitter, sinceDate.toDateString()])
   }
 }
+
+export const getPostsWithTag = async (dbClient: Client, tag: string): Promise<QueryResult<Submission>> => {
+  return await dbClient.query('SELECT external_link as "externalLink", discord_link as "discordLink" FROM public.submissions s LEFT JOIN public.submission_tags st ON s.id = st.submission_id WHERE st.tag = $1', [tag])
+}
