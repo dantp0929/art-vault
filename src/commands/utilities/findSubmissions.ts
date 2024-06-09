@@ -21,27 +21,19 @@ module.exports = {
     const queryResults = (await getPostsWithTag(dbClient, tag)).rows
     if (queryResults.length === 0) throw new Error(`There are no tags that exactly match '${tag}'.`)
 
-    let response = ''
+    const response = {
+      content: '',
+      fetchReply: true,
+      ephemeral: !interaction.options.getBoolean('public') ?? true
+    }
     let isFirstReply = true
     for (const [i, row] of queryResults.entries()) {
-      response += `${row.discordLink} - ${row.submitter} - <${row.externalLink}>\n`
+      response.content += `${row.discordLink} - ${row.submitter} - <${row.externalLink}>\n`
 
       if (i % 10 === 0 || i === queryResults.length - 1) {
-        if (isFirstReply) {
-          await interaction.reply({
-            content: response,
-            fetchReply: true,
-            ephemeral: !interaction.options.getBoolean('public') ?? true
-          })
-          isFirstReply = false
-        } else {
-          await interaction.followUp({
-            content: response,
-            fetchReply: true,
-            ephemeral: !interaction.options.getBoolean('public') ?? true
-          })
-        }
-        response = ''
+        isFirstReply ? await interaction.reply(response) : await interaction.followUp(response)
+        isFirstReply = false
+        response.content = ''
       }
     }
   }
