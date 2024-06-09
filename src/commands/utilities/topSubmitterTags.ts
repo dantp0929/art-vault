@@ -22,13 +22,14 @@ module.exports = {
     const queryResults = (await getTopSubmitterTags(dbClient, submitter)).rows
     if (queryResults.length === 0) throw new Error(`There are no submitters that match '${submitter}'.`)
 
-    const table = new AsciiTable3(`Top Tags for '${submitter}'`)
+    const table = new AsciiTable3(`Top 20 Tags for '${submitter}'`)
       .setStyle('unicode-single')
       .setHeading('Tag', 'Count')
 
-    queryResults.forEach(row => {
+    for (const [i, row] of queryResults.entries()) {
+      if (i > 20) break
       table.addRow(row.tag, row.count)
-    })
+    }
 
     await interaction.reply({
       content: '```\n' + table.toString() + '```',
