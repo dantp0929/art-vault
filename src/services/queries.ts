@@ -1,5 +1,5 @@
 import { type Client, type QueryResult } from 'pg'
-import { type SubmissionTag, type Submission } from '../models/DatabaseModels'
+import { type SubmissionTag, type Submission, type TopSubmitters } from '../models/DatabaseModels'
 
 export const createSubmission = async (dbClient: Client, submitter: string, externalLink: string, discordLink: string, createdOn: string): Promise<QueryResult<Submission>> => {
   return await dbClient.query('INSERT INTO public.submissions(submitter, external_link, discord_link, created_on, updated_on) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -46,4 +46,14 @@ export const getTags = async (dbClient: Client, submissionId: number): Promise<Q
 
 export const deleteTags = async (dbClient: Client, submissionId: number): Promise<void> => {
   await dbClient.query('DELETE FROM public.submission_tags WHERE submission_id = $1', [submissionId])
+}
+
+export const getTopTagSubmitters = async (dbClient: Client, tag: string, sinceDate: Date | null = null): Promise<QueryResult<TopSubmitters>> => {
+  if (sinceDate == null) {
+    return await dbClient.query('SELECT s.submitter, st.tag, COUNT(*) FROM public.submissions s LEFT JOIN public.submission_tags st ON s.id = st.submission_id WHERE tag ~* $1 GROUP BY s.submitter, st.tag ORDER BY count DESC',
+      [tag])
+  } else {
+    return await dbClient.query('SELECT s.submitter, st.tag, COUNT(*) FROM public.submissions s LEFT JOIN public.submission_tags st ON s.id = st.submission_id WHERE tag ~* $1 AND s.created_on > $2 GROUP BY s.submitter, st.tag ORDER BY count DESC',
+      [tag, sinceDate.toDateString()])
+  }
 }

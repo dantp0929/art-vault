@@ -14,7 +14,7 @@ module.exports = {
     .addStringOption(option =>
       option.setName('tags')
         .setDescription('Comma separated tags for the art piece.')),
-  async execute(interaction: any, dbClient: Client) {
+  async execute (interaction: any, dbClient: Client) {
     try {
       const submitter: string = interaction.user.username
       const externalLink = getTransformedLink(new URL(interaction.options.getString('link'))) // eslint-disable-line @typescript-eslint/no-unsafe-argument

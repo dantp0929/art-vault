@@ -12,3 +12,9 @@ export interface SubmissionTag {
   submissionId: number
   tag: string
 }
+
+export interface TopSubmitters {
+  submitter: string
+  tag: string
+  count: number
+}
