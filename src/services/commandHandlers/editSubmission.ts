@@ -3,7 +3,7 @@ import { type Client } from 'pg'
 import { createTags, createSpoilers, deleteTags, deleteSpoilers, getSubmissionById } from '../queries'
 import { buildMessage } from './buildMessage'
 
-export const editTagSubmission = async (interaction: ModalSubmitInteraction, dbClient: Client): Promise<string | undefined> => {
+export const editSubmission = async (interaction: ModalSubmitInteraction, dbClient: Client): Promise<string | undefined> => {
   try {
     if (!interaction.isModalSubmit()) return
 

@@ -2,7 +2,7 @@ import { type BaseInteraction, Events } from 'discord.js'
 import { dbClient, discordClient } from './services'
 import { type ExtendedApplicationCommand, type ExtendedClient } from './models/Extensions'
 import { deployCommands } from './deploy-commands'
-import { editTagSubmission } from './services/commandHandlers/editTagSubmission'
+import { editSubmission } from './services/commandHandlers/editSubmission'
 
 deployCommands()
 
@@ -12,7 +12,7 @@ discordClient.on('ready', () => {
 
 discordClient.on(Events.InteractionCreate, async (interaction: BaseInteraction) => {
   if (interaction.isModalSubmit() && interaction.customId.includes(`editModal-${interaction.user.id}`)) {
-    const editedMessageLink = await editTagSubmission(interaction, dbClient)
+    const editedMessageLink = await editSubmission(interaction, dbClient)
     await interaction.reply({ content: `Submission has been updated! ${editedMessageLink}`, flags: 'Ephemeral' })
     return
   }
