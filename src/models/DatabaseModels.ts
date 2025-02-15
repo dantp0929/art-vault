@@ -13,6 +13,12 @@ export interface SubmissionTag {
   tag: string
 }
 
+export interface SubmissionSpoiler {
+  id: number
+  submissionId: number
+  spoiler: string
+}
+
 export interface TopSubmitters {
   submitter: string
   tag: string
