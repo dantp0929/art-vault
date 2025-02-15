@@ -33,7 +33,7 @@ module.exports = {
     await interaction.reply({
       content: '```\n' + table.toString() + '```',
       fetchReply: true,
-      ephemeral: !interaction.options.getBoolean('public') ?? true
+      ephemeral: !interaction.options.getBoolean('public')
     })
   }
 }

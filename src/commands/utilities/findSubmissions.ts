@@ -24,7 +24,7 @@ module.exports = {
     const response = {
       content: '',
       fetchReply: true,
-      ephemeral: !interaction.options.getBoolean('public') ?? true
+      ephemeral: !interaction.options.getBoolean('public')
     }
     let isFirstReply = true
     for (const [i, row] of queryResults.entries()) {

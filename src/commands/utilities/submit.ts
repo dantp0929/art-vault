@@ -1,7 +1,8 @@
 import { type Client } from 'pg'
-import { SlashCommandBuilder } from 'discord.js'
-import { createSubmission, createTags, getSubmissionByLink, getTags, updateSubmission } from '../../services/queries'
+import { type ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js'
+import { createSpoilers, createSubmission, createTags, getSpoilers, getSubmissionByLink, getTags, updateSubmission } from '../../services/queries'
 import { SubmissionError } from '../../models/Errors'
+import { buildMessage } from '../../services/commandHandlers/buildMessage'
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,12 +14,17 @@ module.exports = {
         .setRequired(true))
     .addStringOption(option =>
       option.setName('tags')
-        .setDescription('Comma separated tags for the art piece.')),
-  async execute (interaction: any, dbClient: Client) {
+        .setDescription('Comma separated tags for the art piece.'))
+    .addStringOption(option =>
+      option.setName('spoilers')
+        .setDescription('Is this a spoiler for something?')
+    ),
+  async execute (interaction: ChatInputCommandInteraction, dbClient: Client) {
     try {
       const submitter: string = interaction.user.username
-      const externalLink = getTransformedLink(new URL(interaction.options.getString('link'))) // eslint-disable-line @typescript-eslint/no-unsafe-argument
-      let tags = ((interaction.options.getString('tags') as string) ?? '').split(',').map(tag => tag.trim()).filter(tag => !!tag)
+      const externalLink = getTransformedLink(new URL(interaction.options.getString('link', true)))
+      let tags = ((interaction.options.getString('tags')) ?? '').split(',').map(tag => tag.trim()).filter(tag => !!tag)
+      let spoilers = ((interaction.options.getString('spoilers')) ?? '').split(',').map(spoiler => spoiler.trim()).filter(spoiler => !!spoiler)
       const currentTime = new Date().toISOString()
 
       const existingSubmission = (await getSubmissionByLink(dbClient, externalLink)).rows[0]
@@ -26,14 +32,22 @@ module.exports = {
       await dbClient.query('BEGIN')
 
       if (existingSubmission) {
-        const existingMessageId = existingSubmission.discordLink.split('/').at(6)
-        const existingMessage = await interaction.channel?.messages.fetch(existingMessageId).catch((e: any) => { console.log(e) })
+        const existingMessageId = existingSubmission.discordLink.split('/').at(6)!
+        const existingMessage = await interaction.channel!.messages.fetch(existingMessageId).catch((e: any) => { console.log(e) })
 
         const existingTags = (await getTags(dbClient, existingSubmission.id)).rows
+        const existingSpoilers = (await getSpoilers(dbClient, existingSubmission.id)).rows
         const newTags = tags
+        const newSpoilers = spoilers
         existingTags.forEach(row => {
           if (newTags.includes(row.tag)) {
             newTags.splice(newTags.indexOf(row.tag), 1)
+          }
+        })
+
+        existingSpoilers.forEach(row => {
+          if (newSpoilers.includes(row.spoiler)) {
+            newSpoilers.splice(newTags.indexOf(row.spoiler), 1)
           }
         })
 
@@ -42,29 +56,39 @@ module.exports = {
           if (newTags.length > 0) {
             await createTags(dbClient, existingSubmission.id, newTags)
             newTags.push(...existingTags.map(r => r.tag))
-            existingMessage.edit(`${externalLink} - ${newTags.join(', ')}`)
-            throw new SubmissionError(`This link has already been submitted: ${existingSubmission.discordLink} \nTags have been updated.`)
+          }
+          if (newSpoilers.length > 0) {
+            await createSpoilers(dbClient, existingSubmission.id, newSpoilers)
+            newSpoilers.push(...existingSpoilers.map(r => r.spoiler))
+          }
+          if (newTags.length > 0 || newSpoilers.length > 0) {
+            existingMessage.edit(buildMessage(externalLink, newTags, newSpoilers))
+            throw new SubmissionError(`This link has already been submitted: ${existingSubmission.discordLink}\nSubmission has been updated.`)
           }
           throw new Error(`This link has already been submitted: ${existingSubmission.discordLink}\nhttps://tenor.com/view/cringe-gif-24107071`)
         }
         tags = [...newTags, ...existingTags.map(r => r.tag)]
+        spoilers = [...newSpoilers, ...existingSpoilers.map(r => r.spoiler)]
       }
 
       // Send a reply and retrieve the link
       const reply = await interaction.reply({
-        content: tags.length > 0 ? `${externalLink} - ${tags.join(', ')}` : externalLink,
-        fetchReply: true
+        content: buildMessage(externalLink, tags, spoilers),
+        withResponse: true
       })
-      const discordLink = `https://discord.com/channels/${reply.guildId}/${reply.channelId}/${reply.id}`
+      const discordLink = `https://discord.com/channels/${reply.resource?.message?.guildId}/${reply.resource?.message?.channelId}/${reply.resource?.message?.id}`
 
       // Insert into submissions and submission_tags tables
       if (existingSubmission) {
         await updateSubmission(dbClient, existingSubmission.id, discordLink, currentTime)
         const newTags = await getNewTags(dbClient, existingSubmission.id, tags)
+        const newSpoilers = await getNewSpoilers(dbClient, existingSubmission.id, spoilers)
         await createTags(dbClient, existingSubmission.id, newTags)
+        await createSpoilers(dbClient, existingSubmission.id, newSpoilers)
       } else {
         const submission = await createSubmission(dbClient, submitter, externalLink, discordLink, currentTime)
         await createTags(dbClient, submission.rows[0].id, tags)
+        await createSpoilers(dbClient, submission.rows[0].id, spoilers)
       }
 
       await dbClient.query('COMMIT')
@@ -105,4 +129,14 @@ const getNewTags = async (dbClient: Client, submissionId: number, tags: string[]
     }
   })
   return tags
+}
+
+const getNewSpoilers = async (dbClient: Client, submissionId: number, spoilers: string[]): Promise<string[]> => {
+  const existingSpoilers = (await getSpoilers(dbClient, submissionId)).rows
+  existingSpoilers.forEach(row => {
+    if (spoilers.includes(row.spoiler)) {
+      spoilers.splice(spoilers.indexOf(row.spoiler), 1)
+    }
+  })
+  return spoilers
 }

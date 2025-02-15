@@ -1,5 +1,5 @@
 import { type Client, type QueryResult } from 'pg'
-import { type SubmissionTag, type Submission, type TopSubmitters } from '../models/DatabaseModels'
+import { type SubmissionTag, type Submission, type TopSubmitters, type SubmissionSpoiler } from '../models/DatabaseModels'
 
 export const createSubmission = async (dbClient: Client, submitter: string, externalLink: string, discordLink: string, createdOn: string): Promise<QueryResult<Submission>> => {
   return await dbClient.query('INSERT INTO public.submissions(submitter, external_link, discord_link, created_on, updated_on) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -39,13 +39,35 @@ export const createTags = async (dbClient: Client, submissionId: number, tags: s
   await Promise.all(queries)
 }
 
+export const createSpoilers = async (dbClient: Client, submissionId: number, spoilers: string[]): Promise<void> => {
+  spoilers = [...new Set(spoilers)]
+
+  const queries: Array<Promise<QueryResult<SubmissionSpoiler>>> = []
+  spoilers.forEach((spoiler: string) => {
+    spoiler = spoiler.trim()
+    queries.push(dbClient.query('INSERT INTO public.submission_spoilers(submission_id, spoiler) VALUES($1, $2)',
+      [submissionId, spoiler]
+    ))
+  })
+  await Promise.all(queries)
+}
+
 export const getTags = async (dbClient: Client, submissionId: number): Promise<QueryResult<SubmissionTag>> => {
   return await dbClient.query<SubmissionTag>('SELECT id, submission_id as "submissionId", tag FROM public.submission_tags WHERE submission_id = $1',
     [submissionId])
 }
 
+export const getSpoilers = async (dbClient: Client, submissionId: number): Promise<QueryResult<SubmissionSpoiler>> => {
+  return await dbClient.query<SubmissionSpoiler>('SELECT id, submission_id as "submissionId", spoiler FROM public.submission_spoilers WHERE submission_id = $1',
+    [submissionId])
+}
+
 export const deleteTags = async (dbClient: Client, submissionId: number): Promise<void> => {
   await dbClient.query('DELETE FROM public.submission_tags WHERE submission_id = $1', [submissionId])
+}
+
+export const deleteSpoilers = async (dbClient: Client, submissionId: number): Promise<void> => {
+  await dbClient.query('DELETE FROM public.submission_spoilers WHERE submission_id = $1', [submissionId])
 }
 
 export const getTopTagSubmitters = async (dbClient: Client, tag: string, sinceDate: Date | null = null): Promise<QueryResult<TopSubmitters>> => {
