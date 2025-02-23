@@ -2,7 +2,7 @@ import { type Client } from 'pg'
 import { type ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js'
 import { createSpoilers, createSubmission, createTags, getSpoilers, getSubmissionByLink, getTags, updateSubmission } from '../../services/queries'
 import { SubmissionError } from '../../models/Errors'
-import { buildMessage } from '../../services/commandHandlers/buildMessage'
+import { buildMessage } from '../../services/utilities/buildMessage'
 
 module.exports = {
   data: new SlashCommandBuilder()

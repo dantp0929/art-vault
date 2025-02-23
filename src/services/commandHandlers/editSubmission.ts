@@ -1,7 +1,7 @@
 import { type ModalSubmitInteraction } from 'discord.js'
 import { type Client } from 'pg'
 import { createTags, createSpoilers, deleteTags, deleteSpoilers, getSubmissionById } from '../queries'
-import { buildMessage } from './buildMessage'
+import { buildMessage } from '../utilities/buildMessage'
 
 export const editSubmission = async (interaction: ModalSubmitInteraction, dbClient: Client): Promise<string | undefined> => {
   try {

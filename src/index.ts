@@ -10,6 +10,7 @@ discordClient.on('ready', () => {
   console.log(`Logged in as ${discordClient.user!.tag}!`)
 })
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 discordClient.on(Events.InteractionCreate, async (interaction: BaseInteraction) => {
   if (interaction.isModalSubmit() && interaction.customId.includes(`editModal-${interaction.user.id}`)) {
     const editedMessageLink = await editSubmission(interaction, dbClient)
