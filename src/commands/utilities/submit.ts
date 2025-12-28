@@ -19,10 +19,10 @@ module.exports = {
       option.setName('spoilers')
         .setDescription('Is this a spoiler for something?')
     ),
-  async execute (interaction: ChatInputCommandInteraction, dbClient: Client) {
+  async execute(interaction: ChatInputCommandInteraction, dbClient: Client) {
     try {
       const submitter: string = interaction.user.username
-      const externalLink = getTransformedLink(new URL(interaction.options.getString('link', true)))
+      const externalLink = await getTransformedLink(new URL(interaction.options.getString('link', true)))
       let tags = ((interaction.options.getString('tags')) ?? '').split(',').map(tag => tag.trim()).filter(tag => !!tag)
       let spoilers = ((interaction.options.getString('spoilers')) ?? '').split(',').map(spoiler => spoiler.trim()).filter(spoiler => !!spoiler)
       const currentTime = new Date().toISOString()
@@ -104,7 +104,7 @@ module.exports = {
   }
 }
 
-const getTransformedLink = (originalUrl: URL): string => {
+const getTransformedLink = async (originalUrl: URL): Promise<string> => {
   let link = originalUrl.href
   if (originalUrl.host === 'twitter.com') {
     link = originalUrl.href.replace('twitter.com', 'vxtwitter.com')
@@ -116,6 +116,12 @@ const getTransformedLink = (originalUrl: URL): string => {
   if (link.includes('vxtwitter.com')) {
     if (link.includes('?')) link = link.slice(0, link.indexOf('?'))
     if (link.includes('/photo')) link = link.slice(0, link.indexOf('/photo'))
+
+    if (link.includes('/i/')) {
+      const apiResult = await (await fetch(link.replace('vxtwitter.com', 'api.vxtwitter.com'))).text()
+      link = JSON.parse(apiResult).tweetURL;
+      link = link.replace('twitter.com', 'vxtwitter.com');
+    }
   }
 
   return link.trim()
