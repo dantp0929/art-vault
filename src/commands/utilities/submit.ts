@@ -112,6 +112,9 @@ const getTransformedLink = async (originalUrl: URL): Promise<string> => {
   if (originalUrl.host === 'x.com') {
     link = originalUrl.href.replace('x.com', 'vxtwitter.com')
   }
+  if (originalUrl.host === 'fixupx.com') {
+    link = originalUrl.href.replace('fixupx.com', 'vxtwitter.com')
+  }
 
   if (link.includes('vxtwitter.com')) {
     if (link.includes('?')) link = link.slice(0, link.indexOf('?'))
